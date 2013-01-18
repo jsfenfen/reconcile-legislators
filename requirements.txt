@@ -5,7 +5,5 @@ django-debug-toolbar
 pytz
 pyyaml
 python-dateutil
-#django-piston==0.2.2.1
-# south
-# jellyfish https://github.com/sunlightlabs/jellyfish (installed manually? )
+jellyfish
 nameparser
