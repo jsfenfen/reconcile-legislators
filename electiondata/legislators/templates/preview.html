@@ -1,0 +1,14 @@
+<html>
+<title>{{ legislator.official_full}}</title>
+<body style="width:{{ preview_width }}px; height:{{ preview_height }}px;">
+<div style="height: 45px;">
+<b>{{ legislator.official_full}}</b>
+<br>{% if legislator.birthday %}born {{ legislator.birthday|date:"n/j/Y" }};{% endif %} see <a href="http://bioguide.congress.gov/scripts/biodisplay.pl?index={{ legislator.bioguide }}" target="null">bioguide</a>
+</div>
+<div style="height:195px; overflow:auto;">
+{% for term in terms %}
+<br>{{ term.chamber }}: {{ term.start|date:"n/j/y" }}-{{ term.end|date:"n/j/y" }} {{ term.state }}{% if term.district %} District {{term.district}}{% endif %}
+{% endfor %}
+</div>
+</body>
+</html>

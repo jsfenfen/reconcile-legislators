@@ -8,8 +8,8 @@
   },
   "preview" : {
     "url" : "{{ preview_base }}{% templatetag openbrace %}{% templatetag openbrace %}id{% templatetag closebrace %}{% templatetag closebrace %}/",
-    "width" : 430,
-    "height" : 300
+    "width" : {{ preview_width }},
+    "height" : {{ preview_height }}
   },
   "defaultTypes" : []
 })

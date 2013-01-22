@@ -2,6 +2,14 @@ import json, re
 from utils.json_helpers import render_to_json, render_to_json_via_template
 from legislators.legislator_reconciler import run_legislator_query
 from django.views.decorators.csrf import csrf_exempt 
+from django.conf import settings
+
+try:
+    PREVIEW_BASE_URL = settings.PREVIEW_BASE_URL
+    PREVIEW_WIDTH = settings.PREVIEW_WIDTH
+    PREVIEW_HEIGHT = settings.PREVIEW_HEIGHT
+except:
+    raise Exception("Couldn't import preview settings. Are PREVIEW_BASE_URL, PREVIEW_WIDTH and PREVIEW_HEIGHT defined in a settings file?")
 
 # Return the service metadata 
 def get_metadata(callbackarg, reconciliation_type):
@@ -17,9 +25,11 @@ def get_metadata(callbackarg, reconciliation_type):
     return render_to_json_via_template("reconcile/templates/service_metadata.json", {
         'space_base':"http://reporting.sunlightfoundation.com/",
         'url_base':"http://reporting.sunlightfoundation.com/",
-        'preview_base':"http://reporting.sunlightfoundation.com/",
+        'preview_base':PREVIEW_BASE_URL,
         'reconciliation_name':reconciliation_name, 
         'callbackarg':callbackarg,
+        'preview_width':PREVIEW_WIDTH,
+        'preview_height':PREVIEW_HEIGHT
     })
 
 def normalize_properties(query):

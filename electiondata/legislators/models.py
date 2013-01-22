@@ -51,3 +51,13 @@ class Term(models.Model):
     def __unicode__(self):
         return "%s, %s, %s %s %s %s" % (self.legislator.last_name, self.legislator.first_name, self.party, self.term_type, self.state, self.district)
     
+    def chamber(self):
+        if self.term_type=='rep':
+            return "House"
+        elif self.term_type=='sen':
+            return "Senate"
+        else:
+            return self.term_type
+            
+
+        

@@ -11,3 +11,7 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
+
+PREVIEW_BASE_URL = "http://localhost:8000/legislators/preview/"
+PREVIEW_WIDTH = 430
+PREVIEW_HEIGHT = 270

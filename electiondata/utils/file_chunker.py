@@ -1,4 +1,4 @@
-""" Yamlparser can't read big files; so split a file up into single records. Assumes that there's only one top-level identifier, and some other stuff. """
+""" Yamlparser can't read big files; so split a file up into single records. Assumes that there's only one top-level identifier, and some other stuff."""
 
 import re
 
