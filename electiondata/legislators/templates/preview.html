@@ -7,7 +7,7 @@
 </div>
 <div style="height:195px; overflow:auto;">
 {% for term in terms %}
-<br>{{ term.chamber }}: {{ term.start|date:"n/j/y" }}-{{ term.end|date:"n/j/y" }} {{ term.state }}{% if term.district %} District {{term.district}}{% endif %}
+<br>{{ term.chamber }} [{{term.party}}]: {{ term.start|date:"n/j/y" }}-{{ term.end|date:"n/j/y" }} {{ term.state }}{% if term.district %} District {{term.district}}{% endif %}
 {% endfor %}
 </div>
 </body>

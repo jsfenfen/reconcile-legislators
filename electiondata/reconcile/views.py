@@ -64,7 +64,7 @@ def do_legislator_query(query):
                     office = thisproperty['office']
                 elif key =='year':
                     year = thisproperty['year']
-    match_key_hash = run_legislator_query(query['query'], state, office, year)
+    match_key_hash = run_legislator_query(query['query'], state=state, office=office, year=year)
     return match_key_hash
     
 
