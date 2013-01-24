@@ -41,8 +41,11 @@ def block_by_startswith(name, numchars, state=None, office=None, cycle=None):
         # make sure it's a string
         cycle = str(cycle)
         matches = matches.filter(cycle=cycle)
-        
-    return matches
+    
+    matches = matches.order_by('fec_name', 'office', 'state_race', 'district', 'fec_id', 'party')
+    match_values = matches.values('fec_name', 'office', 'state_race', 'district', 'fec_id', 'party').distinct()
+
+    return match_values
 
 def simple_clean(string):
     try:
@@ -89,7 +92,7 @@ def run_fec_query(name, state=None, office=None, cycle=None):
         
     for match in possible_matches:
         
-        name2_name = HumanName(match.fec_name)
+        name2_name = HumanName(match['fec_name'])
         name2 = simple_clean(name2_name.last) + " " + unnickname(name2_name.first)
         # calculate a buncha metrics
         text1 = name1_standardized
@@ -123,8 +126,8 @@ def run_fec_query(name, state=None, office=None, cycle=None):
         
         
         if (score > 0.8):
-            name_standardized = "%s (%s: %s-%s) cycle=%s election=%s" % (match.fec_name, match.office, match.state_race, match.district, match.cycle, match.election_year)
-            result_array.append({'name':name_standardized, 'id':match.fec_id, 'score':score, 'type':[], 'match':False})
+            name_standardized = "%s %s (%s: %s-%s)" % (match['fec_name'], match['party'], match['office'], match['state_race'], match['district'])
+            result_array.append({'name':name_standardized, 'id':match['fec_id'], 'score':score, 'type':[], 'match':False})
             if debug:
                 print "Match found: %s" % name_standardized
     
