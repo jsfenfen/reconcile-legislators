@@ -6,6 +6,7 @@ from django.db.models import Q
 from fec_ids.models import Candidate
 from nameparser import HumanName
 from datetime import date
+from operator import itemgetter
 
 
 from nicknames.nicknames import nicknamedict
@@ -130,5 +131,7 @@ def run_fec_query(name, state=None, office=None, cycle=None):
     if (len(result_array)==0):
         if debug:
             print "No match for %s, which was standardized to: %s" % (name, name1_standardized)
+    # surprisingly, google refine *doesn't* sort by score.
+    result_array = sorted(result_array, key=itemgetter('score'), reverse=True)
     return result_array
         

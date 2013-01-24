@@ -6,6 +6,7 @@ from django.db.models import Q
 from legislators.models import Term, Legislator, Other_Names
 from nameparser import HumanName
 from datetime import date
+from operator import itemgetter
 
 
 from nicknames.nicknames import nicknamedict
@@ -149,6 +150,7 @@ def run_legislator_query(name, state=None, office=None, year=None):
     if (len(result_array)==0):
         if debug:
             print "No match for %s, which was standardized to: %s" % (name, name1_standardized)
+    result_array = sorted(result_array, key=itemgetter('score'), reverse=True)
     return result_array
         
 """
