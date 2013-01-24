@@ -1,5 +1,6 @@
 from fuzzywuzzy import fuzz
 import jellyfish
+import unicodedata
 from utils.matchlength import longest_match
 from django.db.models import Q
 from legislators.models import Term, Legislator, Other_Names
@@ -11,8 +12,9 @@ from nicknames.nicknames import nicknamedict
 
 debug=True
 
+
 # The data isn't by term, but by first and last day; in theory we could give it a time range, but in practice it's easiest to just specify a year. Maybe should modify this to be a term ? 
-def block_by_startswith(name, numchars, state=None, office=None, year=None):
+def block_by_startswith(name, numchars, state=None, office=None, year=None, city=None):
     namestart = name[:numchars]
     if debug:
         print "blocking with %s" % (namestart)
@@ -60,6 +62,10 @@ def block_by_startswith(name, numchars, state=None, office=None, year=None):
     return matches
 
 def simple_clean(string):
+    try:
+        string = unicodedata.normalize('NFKD',string).encode('ascii','ignore')
+    except TypeError:
+        print "unicode typeerror!"
     return string.strip().lower()
 
 # throw out the lowest one and calculate an average. 
@@ -77,6 +83,7 @@ def unnickname(firstname):
         pass
     return firstname
 
+    
 def run_legislator_query(name, state=None, office=None, year=None):
     starts_with_blocklength = 6;
     result_array = []

@@ -1,0 +1,13 @@
+<html>
+<title>{{ candidate.fec_name}}</title>
+<body style="width:{{ preview_width }}px; height:{{ preview_height }}px;">
+<b><a href="http://query.nictusa.com/cgi-bin/fecimg/?{{ candidate.fec_id }}">{{ candidate.fec_name}} - {{ candidate.election_year }} election</a></b> 
+<br><b>Party:</b> {{ candidate.party}}
+<br><b>Office:</b> {{ candidate.office}}
+<br><b>State:</b> {{candidate.state_race}}
+<br><b>District:</b> {{ candidate.district}}
+<br><b>FEC ID:</b> {{ candidate.fec_id }}
+<br><b>Cycles:</b>
+{% for candidate in candidates %}{{ candidate.cycle}}{% if forloop.last %}{% else %}, {% endif %}{% endfor %}
+</body>
+</html>

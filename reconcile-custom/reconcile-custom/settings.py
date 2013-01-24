@@ -1,5 +1,3 @@
-# Django settings for electiondata project.
-
 DEBUG = False
 TEMPLATE_DEBUG = False
 
@@ -97,10 +95,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'electiondata.urls'
+ROOT_URLCONF = 'reconcile-custom.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'electiondata.wsgi.application'
+WSGI_APPLICATION = 'reconcile-custom.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -116,6 +114,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'legislators',
+    'fec_ids',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:

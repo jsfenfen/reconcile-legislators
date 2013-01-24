@@ -12,6 +12,6 @@ DATABASES = {
     }
 }
 
-PREVIEW_BASE_URL = "http://localhost:8000/legislators/preview/"
+PREVIEW_BASE_URL = "http://localhost:8000/%s/preview/"
 PREVIEW_WIDTH = 430
 PREVIEW_HEIGHT = 270

@@ -1,6 +1,7 @@
 import json, re
 from utils.json_helpers import render_to_json, render_to_json_via_template
 from legislators.legislator_reconciler import run_legislator_query
+from fec_ids.fec_reconciler import run_fec_query
 from django.views.decorators.csrf import csrf_exempt 
 from django.conf import settings
 
@@ -15,17 +16,18 @@ except:
 def get_metadata(callbackarg, reconciliation_type):
     
     reconciliation_name = 'sunlight reporting reconcile 0.1'
-    
-    if (reconciliation_type=='payees'):
-        reconciliation_name = 'payees matcher 0.1'
-        
+    PREVIEW_BASE = ""
+    if (reconciliation_type=='fec_ids'):
+        reconciliation_name = 'fec id matcher 0.1'
+        PREVIEW_BASE = PREVIEW_BASE_URL % ('fec_ids')
     elif (reconciliation_type=='legislators'):
         reconciliation_name = 'legislators matcher 0.1'
-    
-    return render_to_json_via_template("reconcile/templates/service_metadata.json", {
+        PREVIEW_BASE = PREVIEW_BASE_URL % ('legislators')
+            
+    return render_to_json_via_template("reconcilers/templates/service_metadata.json", {
         'space_base':"http://reporting.sunlightfoundation.com/",
         'url_base':"http://reporting.sunlightfoundation.com/",
-        'preview_base':PREVIEW_BASE_URL,
+        'preview_base':PREVIEW_BASE,
         'reconciliation_name':reconciliation_name, 
         'callbackarg':callbackarg,
         'preview_width':PREVIEW_WIDTH,
@@ -67,11 +69,32 @@ def do_legislator_query(query):
     match_key_hash = run_legislator_query(query['query'], state=state, office=office, year=year)
     return match_key_hash
     
+def do_fec_query(query):
+    #print "running query: %s" % (query['query'])
+    properties = normalize_properties(query)
+    #print "running query with properties=%s" % (properties)
+    state = None
+    office = None
+    cycle = None
+    if properties:
+        for thisproperty in properties:
+            for key in thisproperty:
+                if key=='state':
+                    state = thisproperty['state']
+                elif key =='office':
+                    office = thisproperty['office']
+                elif key =='cycle':
+                    cycle = thisproperty['cycle']
+    match_key_hash = run_fec_query(query['query'], state=state, office=office, cycle=cycle)
+    return match_key_hash
+    
 
 
 def do_query(query, reconciliation_type):
     if reconciliation_type == 'legislators':
         return do_legislator_query(query)
+    elif reconciliation_type == 'fec_ids':
+        return do_fec_query(query)
     else:
         raise Exception ("Invalid reconciliation type: %s" % (reconciliation_type))
 
