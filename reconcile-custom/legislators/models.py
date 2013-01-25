@@ -25,6 +25,9 @@ class Legislator(models.Model):
     def __unicode__(self):
         return "%s, %s" % (self.last_name, self.first_name)
 
+
+                
+
 # include all names here, both alternates and originals...     
 class Other_Names(models.Model):
     legislator = models.ForeignKey(Legislator)

@@ -57,6 +57,7 @@ def do_legislator_query(query):
     state = None
     office = None
     year = None
+    congress=None
     if properties:
         for thisproperty in properties:
             for key in thisproperty:
@@ -66,7 +67,9 @@ def do_legislator_query(query):
                     office = thisproperty['office']
                 elif key =='year':
                     year = thisproperty['year']
-    match_key_hash = run_legislator_query(query['query'], state=state, office=office, year=year)
+                elif key =='congress':
+                    congress = thisproperty['congress']
+    match_key_hash = run_legislator_query(query['query'], state=state, office=office, year=year, congress=congress)
     return match_key_hash
     
 def do_fec_query(query):

@@ -8,11 +8,8 @@ do
     mkdir -p $datadir/$year/
     # Master candidates file -- includes *all* candidates
     curl -o $datadir/$year/cn$year.zip ftp://ftp.fec.gov/FEC/19$year/cn$year.zip 
-    # Y2K:
-    # curl -o $datadir/$year/cn$year.zip ftp://ftp.fec.gov/FEC/20$year/cn$year.zip 
     unzip -o $datadir/$year/cn$year.zip -d $datadir/$year
-
-    sleep 1 
+    sleep 2
 
 done
 
@@ -23,7 +20,6 @@ do
     mkdir -p $datadir/$year/
     curl -o $datadir/$year/cn$year.zip ftp://ftp.fec.gov/FEC/20$year/cn$year.zip 
     unzip -o $datadir/$year/cn$year.zip -d $datadir/$year
-
-    sleep 1 
+    sleep 2
 
 done

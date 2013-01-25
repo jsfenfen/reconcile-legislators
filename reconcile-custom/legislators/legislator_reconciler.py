@@ -7,15 +7,15 @@ from legislators.models import Term, Legislator, Other_Names
 from nameparser import HumanName
 from datetime import date
 from operator import itemgetter
+from utils.congresses import congress_dates
 
-
-from nicknames.nicknames import nicknamedict
+from utils.nicknames import nicknamedict
 
 debug=True
 
 
 # The data isn't by term, but by first and last day; in theory we could give it a time range, but in practice it's easiest to just specify a year. Maybe should modify this to be a term ? 
-def block_by_startswith(name, numchars, state=None, office=None, year=None, city=None):
+def block_by_startswith(name, numchars, state=None, office=None, year=None, congress=None):
     namestart = name[:numchars]
     if debug:
         print "blocking with %s" % (namestart)
@@ -43,22 +43,32 @@ def block_by_startswith(name, numchars, state=None, office=None, year=None, city
         state = state.strip().upper()
         matches = matches.filter(state=state)
     
-    # default to the current year; this will break for the house between jan. 1 and whenever folks are sworn in, usually jan. 3, I think... 
-    if not year:
-        year = date.today().year
-        
-    yearint = None
-    try:
-        yearint = int(year)
-    except ValueError:
-        pass
+
+    # If there's a congress number, use it and ignore the year.
+    if congress:
+        try:
+            congressdate = congress_dates[str(congress)]
+            matches = matches.filter(end__gte=congressdate['start']).filter(start__lte=congressdate['end'])
+        except KeyError:
+            pass
     
-    if yearint:
+    # default to the current year; this will break for the house between jan. 1 and whenever folks are sworn in, usually jan. 3, I think...     
+    else:
+        if not year:
+            year = date.today().year
         
-        end_date = date(yearint, 12, 31)
-        # Avoid last few days of year--swearing in is typically Jan. 3
-        start_date = date(yearint, 1,10 )
-        matches = matches.filter(end__gte=start_date).filter(start__lte=end_date)
+        yearint = None
+        try:
+            yearint = int(year)
+        except ValueError:
+            pass
+    
+        if yearint:
+        
+            end_date = date(yearint, 12, 31)
+            # Avoid last few days of year--swearing in is typically Jan. 3
+            start_date = date(yearint, 1,10 )
+            matches = matches.filter(end__gte=start_date).filter(start__lte=end_date)
 
     return matches
 
@@ -85,7 +95,7 @@ def unnickname(firstname):
     return firstname
 
     
-def run_legislator_query(name, state=None, office=None, year=None):
+def run_legislator_query(name, state=None, office=None, year=None, congress=None):
     starts_with_blocklength = 6;
     result_array = []
     
@@ -103,7 +113,7 @@ def run_legislator_query(name, state=None, office=None, year=None):
     if not blocking_name:
         blocking_name = simple_clean(name)
         
-    possible_matches = block_by_startswith(blocking_name, starts_with_blocklength, state, office, year)
+    possible_matches = block_by_startswith(blocking_name, starts_with_blocklength, state, office, year, congress)
         
     for match in possible_matches:
         
@@ -141,7 +151,13 @@ def run_legislator_query(name, state=None, office=None, year=None):
         
         
         if (score > 0.8):
-            name_standardized = "%s. %s (%s) (%s) %s-%s" % (match.term_type.title(), match.legislator.official_full, match.party, match.state, match.start.strftime("%m/%d/%y"), match.end.strftime("%m/%d/%y"))
+            # full name is missing in early years
+            return_name = match.legislator.official_full
+            if not return_name:
+                return_name = "%s %s %s %s" % (match.legislator.first_name, match.legislator.middle_name if match.legislator.middle_name else '', match.legislator.last_name, match.legislator.suffix if match.legislator.suffix else '', )
+                
+            
+            name_standardized = "%s. %s (%s) (%s) %s-%s" % (match.term_type.title(), return_name, match.party, match.state, match.start.year, match.end.year)
 #            name_standardized = match.term_type.title() + ". " + match.legislator.official_full + " (" + str(match.party) + ") (" + match.state +") " + match.start.strftime("%m/%d/%y") + "-" + match.end.strftime("%m/%d/%y")
             result_array.append({'name':name_standardized, 'id':match.legislator.bioguide, 'score':score, 'type':[], 'match':False})
             if debug:

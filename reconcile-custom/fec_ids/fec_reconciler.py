@@ -9,7 +9,7 @@ from datetime import date
 from operator import itemgetter
 
 
-from nicknames.nicknames import nicknamedict
+from utils.nicknames import nicknamedict
 
 debug=True
 
