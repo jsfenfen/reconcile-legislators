@@ -15,3 +15,6 @@ DATABASES = {
 PREVIEW_BASE_URL = "http://localhost:8000/%s/preview/"
 PREVIEW_WIDTH = 430
 PREVIEW_HEIGHT = 270
+
+PICKLED_LOOKUP_FILE = PROJECT_ROOT + "/../fec_ids/pickled_lookup/lookup.p"
+SUBMITTED_FILES_DIR = PROJECT_ROOT + "/../fec_ids/contributed_data"

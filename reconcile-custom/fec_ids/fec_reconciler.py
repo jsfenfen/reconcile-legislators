@@ -1,6 +1,6 @@
 from fuzzywuzzy import fuzz
 import jellyfish
-import unicodedata
+import unicodedata, pickle
 from utils.matchlength import longest_match
 from django.db.models import Q
 from fec_ids.models import Candidate
@@ -8,8 +8,17 @@ from nameparser import HumanName
 from datetime import date
 from operator import itemgetter
 
+from django.conf import settings
 
 from utils.nicknames import nicknamedict
+
+
+PICKLED_LOOKUP_FILE = getattr(settings, 'PICKLED_LOOKUP_FILE')
+candidate_hash = pickle.load( open( PICKLED_LOOKUP_FILE, "rb" ) )
+
+
+#push to settings?
+default_cycle='2012'
 
 debug=True
 
@@ -69,10 +78,55 @@ def unnickname(firstname):
         pass
     return firstname
 
-    
-def run_fec_query(name, state=None, office=None, cycle=None):
-    starts_with_blocklength = 6;
+def hash_lookup(name, state=None, office=None, cycle=None):
     result_array = []
+    print "1. running hash lookup with name='%s' and cycle='%s' and state='%s' office='%s'" % (name, cycle, state, office)
+    # try to short circuit with the alias table. For now we're using a default cycle--but maybe we should only do this when a cycle is present ?
+    # Again, cycle is a string. 
+    hashname = str(name).upper().strip().strip('"')
+    if cycle:
+        hash_lookup_cycle = str(cycle)
+    else:
+        hash_lookup_cycle = default_cycle
+        
+    # Our lookup hash is only for 2012 for now, so... 
+    # This doesn't address bootstrapping 2012 lookups for 2014...
+
+    if hash_lookup_cycle=='2012':
+        try:
+            print "2. running hash lookup with name='%s' and cycle='%s'" % (hashname, hash_lookup_cycle)
+            found_candidate = candidate_hash[hash_lookup_cycle][hashname]
+        except KeyError:
+            print "Key error for '%s' '%s'" % (hashname, hash_lookup_cycle)
+            return None
+        if found_candidate:
+            valid_candidate = True
+            print "Found candidate %s" % found_candidate
+            
+            # If we have additional identifiers, insure that they're right. 
+            if state and len(state) > 1:
+                if state != found_candidate['state']:
+                    valid_candidate = False
+            if office and len(office) > 0:
+                if upper(office) != upper(found_candidate['office']):
+                    valid_candidate = False
+                    
+            if valid_candidate:
+                result_array.append({'name':found_candidate['fec_name'], 'id':found_candidate['fec_id'], 'score':1, 'type':[], 'match':True})
+                print "Hash lookup succeeded!"
+                return result_array
+    return None
+
+def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
+    
+    result = hash_lookup(name, state, office, cycle)
+    if result:
+        return result
+    if not fuzzy:
+        return []
+    
+    result_array = []    
+    starts_with_blocklength = 6;
     
     # don't even bother if there are less than 4 letters 
     if (len(name) < 4):

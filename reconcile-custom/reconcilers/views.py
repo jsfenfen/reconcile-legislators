@@ -17,16 +17,19 @@ def get_metadata(callbackarg, reconciliation_type):
     
     reconciliation_name = 'sunlight reporting reconcile 0.1'
     PREVIEW_BASE = ""
-    if (reconciliation_type=='fec_ids'):
-        reconciliation_name = 'fec id matcher 0.1'
+    if (reconciliation_type=='fec_ids' or reconciliation_type == 'fec_ids_nofuzzy'):
+        reconciliation_name = 'fec id matcher - no fuzzy lookups 0.1'
+        if (reconciliation_type=='fec_ids'):
+            reconciliation_name = 'fec id matcher 0.1'            
         PREVIEW_BASE = PREVIEW_BASE_URL % ('fec_ids')
     elif (reconciliation_type=='legislators'):
         reconciliation_name = 'legislators matcher 0.1'
         PREVIEW_BASE = PREVIEW_BASE_URL % ('legislators')
-            
+    
+    # setting the URL to the preview...
     return render_to_json_via_template("reconcilers/templates/service_metadata.json", {
         'space_base':"http://reporting.sunlightfoundation.com/",
-        'url_base':"http://reporting.sunlightfoundation.com/",
+        'url_base':PREVIEW_BASE,
         'preview_base':PREVIEW_BASE,
         'reconciliation_name':reconciliation_name, 
         'callbackarg':callbackarg,
@@ -72,7 +75,7 @@ def do_legislator_query(query):
     match_key_hash = run_legislator_query(query['query'], state=state, office=office, year=year, congress=congress)
     return match_key_hash
     
-def do_fec_query(query):
+def do_fec_query(query, fuzzy=True):
     #print "running query: %s" % (query['query'])
     properties = normalize_properties(query)
     #print "running query with properties=%s" % (properties)
@@ -88,8 +91,9 @@ def do_fec_query(query):
                     office = thisproperty['office']
                 elif key =='cycle':
                     cycle = thisproperty['cycle']
-    match_key_hash = run_fec_query(query['query'], state=state, office=office, cycle=cycle)
+    match_key_hash = run_fec_query(query['query'], state=state, office=office, cycle=cycle, fuzzy=fuzzy)
     return match_key_hash
+
     
 
 
@@ -97,7 +101,9 @@ def do_query(query, reconciliation_type):
     if reconciliation_type == 'legislators':
         return do_legislator_query(query)
     elif reconciliation_type == 'fec_ids':
-        return do_fec_query(query)
+        return do_fec_query(query, fuzzy=True)
+    elif reconciliation_type == 'fec_ids_nofuzzy':
+        return do_fec_query(query, fuzzy=False)
     else:
         raise Exception ("Invalid reconciliation type: %s" % (reconciliation_type))
 
