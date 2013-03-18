@@ -18,6 +18,8 @@ log = logging.getLogger('reconcilers')
 
 
 PICKLED_LOOKUP_FILE = getattr(settings, 'PICKLED_LOOKUP_FILE')
+CHECK_FOR_NAME_REVERSALS = getattr(settings, 'CHECK_FOR_NAME_REVERSALS')
+
 candidate_hash = pickle.load( open( PICKLED_LOOKUP_FILE, "rb" ) )
 
 
@@ -26,6 +28,7 @@ default_cycle='2012'
 
 # Log to the log file ? 
 debug=True
+starts_with_blocklength = 6
 
 # standardize the name that gets passed back to refine - add details to help id the candidate
 def standardize_name_from_dict(candidate):
@@ -127,26 +130,23 @@ def hash_lookup(name, state=None, office=None, cycle=None):
                 return result_array
     return None
 
-def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
+def match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=False):
     
-    result = hash_lookup(name, state, office, cycle)
-    if result:
-        return result
-    if not fuzzy:
-        return []
-    
-    result_array = []    
-    starts_with_blocklength = 6;
-    
-    # don't even bother if there are less than 4 letters 
-    if (len(name) < 4):
-        return result_array
-    
+    result_array = []
     name1 = HumanName(name)
-    name1_standardized = simple_clean(name1.last) + " " + unnickname(name1.first)
     
-    # we block with the first n characters of the last name
-    blocking_name = simple_clean(name1.last)
+    name1_standardized = None
+    blocking_name = None
+    
+    # sometimes we run into a name that's flipped:
+    if reverse_name_order:
+        print "Running name reversal check!"
+        blocking_name = simple_clean(name1.first)
+        name1_standardized = simple_clean(name1.first) + " " + unnickname(name1.last)
+    
+    else:
+        name1_standardized = simple_clean(name1.last) + " " + unnickname(name1.first)
+        blocking_name = simple_clean(name1.last)
     
     # if we can't find the last name, assume the name is the last name. This might be a bad idea. 
     if not blocking_name:
@@ -194,15 +194,34 @@ def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
             if debug:
                 log.debug("Match found: %s" % name_standardized)
     
-    if (len(result_array)==0):
-        if debug:
-            log.debug("No match for %s, which was standardized to: %s" % (name, name1_standardized))
+    if debug and len(result_array)==0:
+        log.debug("No match for %s, which was standardized to: %s" % (name, name1_standardized))
             
     # If it's a good match and there's only one, call it a definite match.
     if (len(result_array)==1):
         if result_array[0]['score'] > 0.9:
             result_array[0]['match'] = True        
     # surprisingly, google refine *doesn't* sort by score.
+    return result_array
+
+def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
+    
+    result = hash_lookup(name, state, office, cycle)
+    if result:
+        return result
+    if not fuzzy:
+        return []
+    
+    # don't even bother if there are less than 4 letters 
+    if (len(name) < 4):
+        return []
+    
+    result_array = match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=False)
+    
+    # If there are no matches, maybe the name got flipped? 
+    if CHECK_FOR_NAME_REVERSALS and len(result_array)==0:
+        result_array = match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=True)
+    
     result_array = sorted(result_array, key=itemgetter('score'), reverse=True)
     return result_array
         

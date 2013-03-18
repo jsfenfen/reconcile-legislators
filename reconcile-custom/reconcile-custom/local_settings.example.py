@@ -19,6 +19,9 @@ PREVIEW_HEIGHT = 270
 PICKLED_LOOKUP_FILE = PROJECT_ROOT + "/../fec_ids/pickled_lookup/lookup.p"
 SUBMITTED_FILES_DIR = PROJECT_ROOT + "/../fec_ids/contributed_data"
 
+# double check candidate name matches for flip-flops? This assumes we're blocking with last name...
+CHECK_FOR_NAME_REVERSALS = True
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,

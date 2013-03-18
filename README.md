@@ -24,7 +24,9 @@ Optionally will take a 'state', 'year' or 'office' property; the state must be a
 Fuzzy Matching
 -----
 
-At the moment, matches are done in a two-step process: the first pass is to pull last names that match the first 8-ish characters, the second is to cull this set with fuzzy-matching techniques. Other blocking methods (metaphone on the last name, for instance) might be more useful, depending on the input data. 
+At the moment, matches are done in a multi-step process: the first pass is to pull last names that match the first 8-ish characters, the second is to cull this set with fuzzy-matching techniques. Other blocking methods (metaphone on the last name, for instance) might be more useful, depending on the input data.
+
+Because it's relatively common for names to appear switched (i.e. "Ron, Paul") the matcher will try to find matches for a reversed version of the name with the same technique. This can be turned off for better performance by setting CHECK_FOR_NAME_REVERSALS to 'False' in the local_settings file.
 
 Logging is set up to record all fuzzy match attempts; the hope is that examination of scoring metrics will help 'tune' them. 
 
