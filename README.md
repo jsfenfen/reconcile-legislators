@@ -9,8 +9,6 @@ Candidates
 ----------
 URL is `yr-url-base/refine/reconcile/fec_ids/` . Also takes a 'state' (2-letter postal code), 'cycle' (4-digit even year ending cycle, i.e. 2012 for 2011-12) and office (case insensitive 'House' or 'Senate'). If a cycle isn't specified, many cycles will be returned. This can be especially confusing if the candidate's district number ever changed. 
 
-Uses same general matching approach, and blocks with the last name. Thus, reversed names--i.e. "ron, paul"--won't work...
-
 Before fuzzy matching is conducted, a lookup table is consulted; if a lookup entry is found that is returned as a match, with score set to 1. If a candidate is found by fuzzy matching the match boolean is set to false, and a numberic score of 0-1 is returned. 
 
 An alternate end point that only checks the alias table for matches is also available--it's generally much faster. It is at: `yr-url-base/refine/reconcile/fec_ids_nofuzzy/`.
@@ -26,7 +24,7 @@ Fuzzy Matching
 
 At the moment, matches are done in a multi-step process: the first pass is to pull last names that match the first 8-ish characters, the second is to cull this set with fuzzy-matching techniques. Other blocking methods (metaphone on the last name, for instance) might be more useful, depending on the input data.
 
-Because it's relatively common for names to appear switched (i.e. "Ron, Paul") the matcher will try to find matches for a reversed version of the name with the same technique. This can be turned off for better performance by setting CHECK_FOR_NAME_REVERSALS to 'False' in the local_settings file.
+Because it's relatively common for candidate names to appear switched (i.e. "Ron, Paul") the matcher will try to find matches for a reversed version of the name with the same technique. This can be turned off for better performance by setting CHECK_FOR_NAME_REVERSALS to 'False' in the local_settings file. This is only done in the candidate lookup, not in the legislator lookup.
 
 Logging is set up to record all fuzzy match attempts; the hope is that examination of scoring metrics will help 'tune' them. 
 
