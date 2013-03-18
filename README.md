@@ -7,7 +7,7 @@ Once the data has been reconciled, attributes returned by the service can be acc
 
 Candidates
 ----------
-URL is `yr-url-base/refine/reconcile/fec_ids/` . Also takes a 'state' (2-letter postal code), 'cycle' (4-digit even year ending cycle, i.e. 2012 for 2011-12) and office (case insensitive 'House' or 'Senate'). If a cycle isn't specified, many cycles will be returned. 
+URL is `yr-url-base/refine/reconcile/fec_ids/` . Also takes a 'state' (2-letter postal code), 'cycle' (4-digit even year ending cycle, i.e. 2012 for 2011-12) and office (case insensitive 'House' or 'Senate'). If a cycle isn't specified, many cycles will be returned. This can be especially confusing if the candidate's district number ever changed. 
 
 Uses same general matching approach, and blocks with the last name. Thus, reversed names--i.e. "ron, paul"--won't work...
 
@@ -40,14 +40,16 @@ A slightly simplified syntax is available for directly querying the candidates m
 
 Instead of using what refine would generate--something like:
 
-	/?queryies={"q0":{"query":"runyan, jon","type":"","type_strict":"should","properties":[{"pid":"state","v":"NJ"}]},"q1":{"query":"Romney, Mitt","type":"","type_strict":"should","properties":[{"pid":"state","v":""}]}}
+```/?queries={"q0":{"query":"runyan, jon","type":"","type_strict":"should","properties":[{"pid":"state","v":"NJ"}]},"q1":{"query":"Romney, Mitt","type":"","type_strict":"should","properties":[{"pid":"state","v":""}]}}
+```
 
-make the properties values of the query
+set the properties values of the query as top-level elements of query item
 
-	/?queries={"q0":{"query":"runyan, jon","state":"NJ"}, "q1":{"query":"Romney, Mitt","state":"", "cycle":"2012"}} 
+```/?queries={"q0":{"query":"runyan, jon","state":"NJ"}, "q1":{"query":"Romney, Mitt","state":"", "cycle":"2012"}}
+``` 
 
 The return values use the query names, and look like this (they are not necessarily returned in the order they are given):
 
-	{"q1": {"result": [{"score": 1, "type": [], "name": "ROMNEY, MITT / RYAN, PAUL D. - REP (P: US-)", "match": true, "id": "P80003353"}]}, "q0": {"result": [{"score": 1, "type": [], "name": "RUNYAN, JON - REP (H: NJ--03)", "match": true, "id": "H0NJ03153"}]}}
+```{"q1": {"result": [{"score": 1, "type": [], "name": "ROMNEY, MITT / RYAN, PAUL D. - REP (P: US-)", "match": true, "id": "P80003353"}]}, "q0": {"result": [{"score": 1, "type": [], "name": "RUNYAN, JON - REP (H: NJ--03)", "match": true, "id": "H0NJ03153"}]}}```
 	
 There's not a hard cap to the number of queries per request, but refine limits it to 10 or so. 
