@@ -5,6 +5,7 @@ from django.http import Http404
 
 from fec_ids.models import Candidate
 
+
 try:
     PREVIEW_WIDTH = settings.PREVIEW_WIDTH
     PREVIEW_HEIGHT = settings.PREVIEW_HEIGHT

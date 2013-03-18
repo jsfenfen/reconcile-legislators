@@ -5,6 +5,9 @@ from fec_ids.fec_reconciler import run_fec_query
 from django.views.decorators.csrf import csrf_exempt 
 from django.conf import settings
 
+import logging
+log = logging.getLogger(__name__)
+
 try:
     PREVIEW_BASE_URL = settings.PREVIEW_BASE_URL
     PREVIEW_WIDTH = settings.PREVIEW_WIDTH

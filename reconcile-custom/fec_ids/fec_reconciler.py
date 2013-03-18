@@ -12,6 +12,10 @@ from django.conf import settings
 
 from utils.nicknames import nicknamedict
 
+import logging
+log = logging.getLogger('reconcilers')
+
+
 
 PICKLED_LOOKUP_FILE = getattr(settings, 'PICKLED_LOOKUP_FILE')
 candidate_hash = pickle.load( open( PICKLED_LOOKUP_FILE, "rb" ) )
@@ -20,7 +24,15 @@ candidate_hash = pickle.load( open( PICKLED_LOOKUP_FILE, "rb" ) )
 #push to settings?
 default_cycle='2012'
 
+# Log to the log file ? 
 debug=True
+
+# standardize the name that gets passed back to refine - add details to help id the candidate
+def standardize_name_from_dict(candidate):
+    district = ""
+    if candidate['district'] != '00':
+        district = "-%s" % candidate['district']
+    return "%s - %s (%s: %s-%s)" % (candidate['fec_name'], candidate['party'], candidate['office'], candidate['state_race'], district)
 
 # We should have been given a last name to block with. We should probably block by
 # something less restrictive (this fails on incorrectly formatted names, i.e. "ron, 
@@ -28,8 +40,8 @@ debug=True
 # cycle must match a string, not an int, eventually 
 def block_by_startswith(name, numchars, state=None, office=None, cycle=None):
     namestart = name[:numchars]
-    if debug:
-        print "blocking with %s" % (namestart)
+    #if debug:
+    #    print "blocking with %s" % (namestart)
         
     matches = Candidate.objects.filter(fec_name__istartswith=namestart)
     
@@ -60,7 +72,7 @@ def simple_clean(string):
     try:
         string = unicodedata.normalize('NFKD',string).encode('ascii','ignore')
     except TypeError:
-        print "unicode typeerror!"
+        log.error("unicode typeerror!")
     return string.strip().lower()
 
 # throw out the lowest one and calculate an average. 
@@ -80,7 +92,7 @@ def unnickname(firstname):
 
 def hash_lookup(name, state=None, office=None, cycle=None):
     result_array = []
-    print "1. running hash lookup with name='%s' and cycle='%s' and state='%s' office='%s'" % (name, cycle, state, office)
+    #print "1. running hash lookup with name='%s' and cycle='%s' and state='%s' office='%s'" % (name, cycle, state, office)
     # try to short circuit with the alias table. For now we're using a default cycle--but maybe we should only do this when a cycle is present ?
     # Again, cycle is a string. 
     hashname = str(name).upper().strip().strip('"')
@@ -94,14 +106,11 @@ def hash_lookup(name, state=None, office=None, cycle=None):
 
     if hash_lookup_cycle=='2012':
         try:
-            print "2. running hash lookup with name='%s' and cycle='%s'" % (hashname, hash_lookup_cycle)
             found_candidate = candidate_hash[hash_lookup_cycle][hashname]
         except KeyError:
-            print "Key error for '%s' '%s'" % (hashname, hash_lookup_cycle)
             return None
         if found_candidate:
             valid_candidate = True
-            print "Found candidate %s" % found_candidate
             
             # If we have additional identifiers, insure that they're right. 
             if state and len(state) > 1:
@@ -112,8 +121,9 @@ def hash_lookup(name, state=None, office=None, cycle=None):
                     valid_candidate = False
                     
             if valid_candidate:
-                result_array.append({'name':found_candidate['fec_name'], 'id':found_candidate['fec_id'], 'score':1, 'type':[], 'match':True})
-                print "Hash lookup succeeded!"
+                name_standardized = standardize_name_from_dict(found_candidate)
+                
+                result_array.append({'name':name_standardized, 'id':found_candidate['fec_id'], 'score':1, 'type':[], 'match':True})
                 return result_array
     return None
 
@@ -175,19 +185,23 @@ def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
             score = compute_scores([ratio,partial_ratio,l_ratio,lng_ratio])
            
         if debug:
-            print "Candidate %s vs %s score: %s" % (text1, text2, score)
-            print ("ratio=%s partial_ratio=%s token_sort_ratio=%s token_set_ratio=%s, l_ratio=%s lng_ratio=%s") % (ratio, partial_ratio, token_sort_ratio, token_set_ratio, l_ratio, lng_ratio)
+            log.debug("|fuzzymatchresult|%s|'%s'|'%s'|score=%s|ratio=%s|partial_ratio=%s|token_sort_ratio=%s|token_set_ratio=%s| l_ratio=%s|lng_ratio=%s" % (match['fec_id'], match['fec_name'], name, score, ratio, partial_ratio, token_sort_ratio, token_set_ratio, l_ratio, lng_ratio))
         
         
         if (score > 0.8):
-            name_standardized = "%s %s (%s: %s-%s)" % (match['fec_name'], match['party'], match['office'], match['state_race'], match['district'])
+            name_standardized = standardize_name_from_dict(match)
             result_array.append({'name':name_standardized, 'id':match['fec_id'], 'score':score, 'type':[], 'match':False})
             if debug:
-                print "Match found: %s" % name_standardized
+                log.debug("Match found: %s" % name_standardized)
     
     if (len(result_array)==0):
         if debug:
-            print "No match for %s, which was standardized to: %s" % (name, name1_standardized)
+            log.debug("No match for %s, which was standardized to: %s" % (name, name1_standardized))
+            
+    # If it's a good match and there's only one, call it a definite match.
+    if (len(result_array)==1):
+        if result_array[0]['score'] > 0.9:
+            result_array[0]['match'] = True        
     # surprisingly, google refine *doesn't* sort by score.
     result_array = sorted(result_array, key=itemgetter('score'), reverse=True)
     return result_array

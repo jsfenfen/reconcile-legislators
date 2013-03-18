@@ -6,6 +6,10 @@ local_settings.py
 # C extensions
 *.so
 
+# logs
+*.log
+
+
 # Packages
 *.egg
 *.egg-info
