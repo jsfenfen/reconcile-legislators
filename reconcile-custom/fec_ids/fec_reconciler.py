@@ -96,7 +96,7 @@ def hash_lookup(name, state=None, office=None, cycle=None):
     # try to short circuit with the alias table. For now we're using a default cycle--but maybe we should only do this when a cycle is present ?
     # Again, cycle is a string. 
     hashname = str(name).upper().strip().strip('"')
-    if cycle:
+    if cycle and len(str(cycle)) > 3:
         hash_lookup_cycle = str(cycle)
     else:
         hash_lookup_cycle = default_cycle
@@ -114,7 +114,7 @@ def hash_lookup(name, state=None, office=None, cycle=None):
             
             # If we have additional identifiers, insure that they're right. 
             if state and len(state) > 1:
-                if state != found_candidate['state']:
+                if state != found_candidate['state_race']:
                     valid_candidate = False
             if office and len(office) > 0:
                 if upper(office) != upper(found_candidate['office']):

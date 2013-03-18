@@ -31,3 +31,21 @@ Logging is set up to record all fuzzy match attempts; the hope is that examinati
 Contributed Alias Tables
 ----
 Some somewhat random alias tables are available--for the 2012 cycle--in fec_ids/contributed_data. These exist as is; there's a management command called generate_lookup_tables that reads these and pickles into a location set by the settings file. 
+
+Simplified candidates direct json call
+----
+A slightly simplified syntax is available for directly querying the candidates match engine outside of google refine. Specifically, it doesn't require the odd 'pid':'v' properties list. Like refine, it uses json urlencoded and passed as a GET argument. It's at: `/refine/reconcile-json/fec_ids_nofuzzy/` or `/refine/reconcile-json/fec_ids/`.
+
+Instead of using what refine would generate--something like:
+
+	/?queryies={"q0":{"query":"runyan, jon","type":"","type_strict":"should","properties":[{"pid":"state","v":"NJ"}]},"q1":{"query":"Romney, Mitt","type":"","type_strict":"should","properties":[{"pid":"state","v":""}]}}
+
+make the properties values of the query
+
+	/?queries={"q0":{"query":"runyan, jon","state":"NJ"}, "q1":{"query":"Romney, Mitt","state":"", "cycle":"2012"}} 
+
+The return values use the query names, and look like this (they are not necessarily returned in the order they are given):
+
+	{"q1": {"result": [{"score": 1, "type": [], "name": "ROMNEY, MITT / RYAN, PAUL D. - REP (P: US-)", "match": true, "id": "P80003353"}]}, "q0": {"result": [{"score": 1, "type": [], "name": "RUNYAN, JON - REP (H: NJ--03)", "match": true, "id": "H0NJ03153"}]}}
+	
+There's not a hard cap to the number of queries per request, but refine limits it to 10 or so. 

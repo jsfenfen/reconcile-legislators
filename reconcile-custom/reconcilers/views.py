@@ -5,9 +5,6 @@ from fec_ids.fec_reconciler import run_fec_query
 from django.views.decorators.csrf import csrf_exempt 
 from django.conf import settings
 
-import logging
-log = logging.getLogger(__name__)
-
 try:
     PREVIEW_BASE_URL = settings.PREVIEW_BASE_URL
     PREVIEW_WIDTH = settings.PREVIEW_WIDTH
@@ -56,8 +53,23 @@ def normalize_properties(query):
     #print "properties are: %s" % newprop_array
     return newprop_array
     
+def flatten_properties(query):
+    # properties can use either 'p' or 'pid'; 'pid' seems to be a throwback to freebase and won't be used here. Convert all pid's or p's to keys
+    properties = query.get('properties')
+    if not properties:
+        return query
+    for this_prop in properties:
+        try:
+            this_prop['pid']
+            newprop_array.append({this_prop['pid']:this_prop['v']})
+        except KeyError:
+            newprop_array.append({this_prop['p']:this_prop['v']})
+
+    #print "properties are: %s" % newprop_array
+    return newprop_array
+        
 def do_legislator_query(query):
-    #print "running query: %s" % (query['query'])
+    print "running query: %s" % (query['query'])
     properties = normalize_properties(query)
     #print "running query with properties=%s" % (properties)
     state = None
@@ -124,7 +136,7 @@ def refine(request, reconciliation_type):
 
     result = {}
     if query:
-        #print "query is: %s" % query
+        print "query is: %s" % query
         # Spec allows a simplified version, i.e. ?query=boston, so check for that first. 
         # ?query={"query":"boston","type":"/music/musical_group"}
         # ?query={"query":"Ford Taurus","limit": 3,"type":"/automotive/model","type_strict":"any","properties": [{"p":"year","v": 2009},{"pid":"/automotive/model/make","v":{"id":"/en/ford"}} ]}
@@ -142,6 +154,7 @@ def refine(request, reconciliation_type):
         return render_to_json(json.dumps(thisjson))
         
     elif queries:
+        #print "queries is %s" % queries
         # ?queries={ "q0" : { "query" : "hackney" }, "q1" : { "query" : "strategic" } }
         q = json.loads(queries)
         thisjson={}
@@ -157,6 +170,42 @@ def refine(request, reconciliation_type):
         return render_to_json(json.dumps(thisjson))
         
     else:
-        print "Couldn't decode the query JSON!"
-        return render_to_json('')
+        message = "Couldn't decode the query JSON!"
+        return render_to_json("{'Error':'%s'}" % message)
     
+# pass url-encoded json that's not quite so weird.
+# instead of using:
+# {"q0":{"query":"runyan, jon","type":"","type_strict":"should","properties":[{"pid":"state","v":"NJ"}]},"q1":{"query":"Romney, Mitt","type":"","type_strict":"should","properties":[{"pid":"state","v":""}]}}
+# use: 
+# {"q0":{"query":"runyan, jon","state":"NJ"}, "q1":{"query":"Romney, Mitt","state":"", "cycle":"2012"}} 
+@csrf_exempt
+def refine_json(request, reconciliation_type):
+    
+    fuzzy=True
+    if reconciliation_type == 'fec_ids':
+        pass
+    elif reconciliation_type == 'fec_ids_nofuzzy':
+        fuzzy=False
+    else:
+        raise Exception ("Invalid reconciliation type: %s" % (reconciliation_type))
+    
+    queries = request.REQUEST.get('queries')
+    if queries:
+        q = json.loads(queries)
+        thisjson={}
+        if q is not None:
+            for key, query in q.iteritems():
+                
+                state = query.get('state', None)
+                office = query.get('office', None)
+                cycle = query.get('cycle', None)
+                result = run_fec_query(query['query'], state=state, office=office, cycle=cycle, fuzzy=fuzzy)
+                thisjson[key] = {'result':result}
+        return render_to_json(json.dumps(thisjson))
+
+        
+    else:
+        message = "Couldn't decode the query JSON!"
+        return render_to_json("{'Error':'%s'}" % message)
+
+
