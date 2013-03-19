@@ -47,23 +47,22 @@ def block_by_startswith(name, numchars, state=None, office=None, cycle=None):
     #    print "blocking with %s" % (namestart)
         
     matches = Candidate.objects.filter(fec_name__istartswith=namestart)
-    
+    president_flag = False
     if office:
-        if office.upper() == 'HOUSE':
+        if office.upper()[:1] == 'H':
             matches = matches.filter(office='H')
-        elif office.upper() == 'SENATE':
+        elif office.upper()[:1] == 'S':
             matches = matches.filter(office='S')
-        elif office.upper() == 'PRESIDENT':
-            matches = matches.filter(office='P')        
+        elif office.upper()[:1] == 'P':
+            matches = matches.filter(office='P')
+            president_flag = True        
         
-    if state:
+    if state and not president_flag:
         state = state.strip().upper()
         matches = matches.filter(state_race=state)
     
     # default to the current year; this will break for the house between jan. 1 and whenever folks are sworn in, usually jan. 3, I think... 
-    if cycle:
-        # make sure it's a string
-        cycle = str(cycle)
+    if cycle and len(str(cycle)) > 3:
         matches = matches.filter(cycle=cycle)
     
     matches = matches.order_by('fec_name', 'office', 'state_race', 'district', 'fec_id', 'party')
@@ -116,11 +115,13 @@ def hash_lookup(name, state=None, office=None, cycle=None):
             valid_candidate = True
             
             # If we have additional identifiers, insure that they're right. 
-            if state and len(state) > 1:
-                if state != found_candidate['state_race']:
-                    valid_candidate = False
             if office and len(office) > 0:
-                if upper(office) != upper(found_candidate['office']):
+                if office.upper()[:1] != found_candidate['office'].upper()[:1]:
+                    valid_candidate = False
+            
+            # ignore states for president.
+            if state and len(state) > 1:
+                if office.upper()[:1] != 'P' and state.upper() != found_candidate['state_race']:
                     valid_candidate = False
                     
             if valid_candidate:
