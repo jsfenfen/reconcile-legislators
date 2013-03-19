@@ -121,8 +121,11 @@ def hash_lookup(name, state=None, office=None, cycle=None):
             
             # ignore states for president.
             if state and len(state) > 1:
-                if office.upper()[:1] != 'P' and state.upper() != found_candidate['state_race']:
-                    valid_candidate = False
+                if state.upper() != found_candidate['state_race']:
+                    if office and office.upper()[:1] == 'P':
+                        pass
+                    else:
+                        valid_candidate = False
                     
             if valid_candidate:
                 name_standardized = standardize_name_from_dict(found_candidate)
