@@ -43,8 +43,8 @@ def standardize_name_from_dict(candidate):
 # cycle must match a string, not an int, eventually 
 def block_by_startswith(name, numchars, state=None, office=None, cycle=None):
     namestart = name[:numchars]
-    #if debug:
-    #    print "blocking with %s" % (namestart)
+    if debug:
+        print "block_by_startswith = state=%s office=%s cycle=%s" % (state,office, cycle)
         
     matches = Candidate.objects.filter(fec_name__istartswith=namestart)
     president_flag = False
@@ -68,6 +68,7 @@ def block_by_startswith(name, numchars, state=None, office=None, cycle=None):
     matches = matches.order_by('fec_name', 'office', 'state_race', 'district', 'fec_id', 'party')
     match_values = matches.values('fec_name', 'office', 'state_race', 'district', 'fec_id', 'party').distinct()
 
+    #print "result is %s" % match_values
     return match_values
 
 def simple_clean(string):
@@ -135,7 +136,8 @@ def hash_lookup(name, state=None, office=None, cycle=None):
     return None
 
 def match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=False):
-    
+    if debug:
+        print "match_by_name = state=%s office=%s cycle=%s" % (state,office, cycle)
     result_array = []
     name1 = HumanName(name)
     
@@ -209,7 +211,9 @@ def match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=
     return result_array
 
 def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
-    
+    if debug:
+        print "run_fec_query = state=%s office=%s cycle=%s" % (state,office, cycle)
+        
     result = hash_lookup(name, state, office, cycle)
     if result:
         return result
@@ -220,11 +224,11 @@ def run_fec_query(name, state=None, office=None, cycle=None, fuzzy=True):
     if (len(name) < 4):
         return []
     
-    result_array = match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=False)
+    result_array = match_by_name(name, state=state, office=office, cycle=cycle, reverse_name_order=False)
     
     # If there are no matches, maybe the name got flipped? 
     if CHECK_FOR_NAME_REVERSALS and len(result_array)==0:
-        result_array = match_by_name(name, state=None, office=None, cycle=None, reverse_name_order=True)
+        result_array = match_by_name(name, state=state, office=office, cycle=cycle, reverse_name_order=True)
     
     result_array = sorted(result_array, key=itemgetter('score'), reverse=True)
     return result_array

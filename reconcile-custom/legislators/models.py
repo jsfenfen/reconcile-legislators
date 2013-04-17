@@ -1,5 +1,5 @@
 from django.db import models
-
+import unicodedata
 # Create your models here.
 
 
@@ -7,11 +7,15 @@ class Legislator(models.Model):
     
     bioguide = models.CharField(max_length=15, blank=True, null=True, unique=True)
     thomas = models.CharField(max_length=15, blank=True, null=True, unique=True)
-    govtrack = models.CharField(max_length=15, blank=True, null=True)
     lis= models.CharField(max_length=15, blank=True, null=True)
+    govtrack = models.CharField(max_length=15, blank=True, null=True)
     opensecrets= models.CharField(max_length=15, blank=True, null=True)
     votesmart= models.CharField(max_length=15, blank=True, null=True)
     icpsr= models.CharField(max_length=15, blank=True, null=True)
+    cspan = models.IntegerField(blank=True, null=True)
+    wikipedia= models.CharField(max_length=127, blank=True, null=True)
+    house_history = models.IntegerField(blank=True, null=True)
+    bioguide_previous = models.CharField(max_length=15, blank=True, null=True)
     first_name= models.CharField(max_length=63, blank=True, null=True)
     middle_name= models.CharField(max_length=63, blank=True, null=True)
     last_name= models.CharField(max_length=127, blank=True, null=True)
@@ -23,9 +27,16 @@ class Legislator(models.Model):
     religion= models.CharField(max_length=127, blank=True, null=True)
     
     def __unicode__(self):
-        return "%s, %s" % (self.last_name, self.first_name)
+        namestring = unicode("%s, %s" % (self.last_name, self.first_name))
+        return unicodedata.normalize('NFKD',namestring).encode('ascii','ignore')
 
 
+class Fec(models.Model):
+    legislator = models.ForeignKey(Legislator)
+    fec_id = models.CharField(max_length=9, blank=True, null=True)
+
+    def __unicode__(self):
+        return self.fec_id
                 
 
 # include all names here, both alternates and originals...     
